@@ -23,18 +23,23 @@ jobs:
 
       - name: Build, Tag y Push de imágenes
         run: |
-          # Lista de tus servicios
           SERVICES=("ms-academico" "ms-asistencia" "ms-comunicaciones" "bff-service" "frontend")
-          
           for service in "${SERVICES[@]}"; do
             echo "Construyendo $service..."
-            # Asumimos que la estructura es ./backend/servicio o ./frontend
             PATH_TO_BUILD=$([[ "$service" == "frontend" ]] && echo "./frontend" || echo "./backend/$service")
-            
             docker build -t $service $PATH_TO_BUILD
             docker tag $service:latest ${{ secrets.ECR_REGISTRY }}/$service:latest
             docker push ${{ secrets.ECR_REGISTRY }}/$service:latest
           done
+
+      # --- NUEVO: ESCANEO DE SEGURIDAD CON SNYK (IE3) ---
+      - name: Ejecutar Snyk para escanear dependencias
+        uses: snyk/actions/maven@master
+        env:
+          SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
+        with:
+          args: --all-projects --severity-threshold=high
+        continue-on-error: false # Esto bloquea el despliegue si Snyk encuentra fallos graves
 
       - name: Despliegue remoto en EC2 vía SSM
         run: |

@@ -32,14 +32,14 @@ jobs:
             docker push ${{ secrets.ECR_REGISTRY }}/$service:latest
           done
 
-      # --- NUEVO: ESCANEO DE SEGURIDAD CON SNYK (IE3) ---
+      # --- CORRECCIÓN: ESCANEO DE SEGURIDAD (IE3) ---
       - name: Ejecutar Snyk para escanear dependencias
-        uses: snyk/actions/maven@master
+        uses: snyk/actions/iac@master
         env:
           SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
         with:
           args: --all-projects --severity-threshold=high
-        continue-on-error: false # Esto bloquea el despliegue si Snyk encuentra fallos graves
+        continue-on-error: false
 
       - name: Despliegue remoto en EC2 vía SSM
         run: |
